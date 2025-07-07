@@ -1,0 +1,48 @@
+name: Mise à jour complète
+
+on:
+  workflow_dispatch:   # Déclenchement manuel
+  schedule:
+    - cron: '0 0 * * *'   # Tous les jours à 00h00 (UTC)
+    - cron: '0 12 * * *'  # Tous les jours à 12h00 (UTC)
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run full update script
+      run: python scripts/update.py
+
+    - name: Commit and push updated data
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        git add donnees.csv
+        git commit -m "Mise à jour automatique de donnees.csv via GitHub Actions" || echo "Pas de changements à committer"
+        git push
+
+    - name: 💾 Sauvegarder donnees.csv comme artefact
+      uses: actions/upload-artifact@v3
+      with:
+        name: sauvegarde-donnees
+        path: donnees.csv
+
+    - name: 💾 Sauvegarder tous les backups
+      uses: actions/upload-artifact@v3
+      with:
+        name: backups
+        path: backups/*.csv

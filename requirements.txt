@@ -3,3 +3,6 @@ numpy>=1.23.0
 spacy>=3.5.0
 joblib>=1.2.0
 scikit-learn>=1.1.0
+google-api-python-client
+youtube-transcript-api
+isodate

@@ -13,7 +13,13 @@ import pandas as pd
 import numpy as np
 import os
 import shutil
+
 API_KEY = os.getenv("YOUTUBE_API_KEY")
+if API_KEY is None:
+    print("Erreur : Clé API manquante.")
+    exit(1)
+
+
 backup_dir = "../backups"
 os.makedirs(backup_dir, exist_ok=True)
 
@@ -31,7 +37,6 @@ nom_fichier = [
     'f3.csv',
     'f4.csv'
 ]
-
 
 youtube = build('youtube', 'v3', developerKey=API_KEY)
 
@@ -152,6 +157,45 @@ if __name__ == '__main__':
         data = pd.DataFrame()
 
     fusion = pd.concat([f1,f2,f3,f4]).reset_index(drop=True)
+    fusion = fusion.drop(fusion.loc[fusion.video_id.duplicated() == True].index).reset_index(drop=True)
+
+    maListe = [
+        'TH MATIN',
+        'FEMMES LEADERS',
+        'QUE DIT LA LOI',
+        'FOCUS SANTE',
+        'LEXIQUE PARLEMENTAIRE',
+        "PARLEMEN'TERRE",
+        'ENTRE PARLEMENTAIRES',
+        'JOURNAL',
+        'JT',
+        'REVUE DE PRESSE',
+        'DYSFONCTON ERECTILE',
+        "PARL'HEBDO"
+    ]
+
+    for emission in maListe:
+        fusion = fusion.drop(fusion.loc[fusion.titre.str.contains(emission,case=False,na=False)].index).reset_index(drop=True)
+
+    fusion.transcription = fusion.transcription.astype(str)
+    fusion.date_publication = pd.to_datetime(fusion.date_publication, format='%d/%m%Y')
+    fusion.type_activite = fusion.type_activite.astype(str)
+    fusion.domaine = fusion.domaine.astype(str)
+
+    traduction_jour = {
+        "Monday" : "Lundi",
+        "Tuesday" : "Mardi",
+        "Wednesday" : "Mercredi",
+        "Thursday" : "Jeudi",
+        "Friday" : "Vendredi",
+        "Saturday" : "Samedi",
+        "Sunday" : "Dimanche"
+    }
+
+    fusion.jour_semaine = fusion.jour_semaine.map(traduction_jour)
+
+
+    
     a_ajouter = fusion[~fusion.video_id.isin(data.video_id)]
 
     if os.path.exists("../donnees.csv"):

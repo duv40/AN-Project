@@ -34,15 +34,15 @@ jobs:
         git add donnees.csv
         git commit -m "Mise à jour automatique de donnees.csv via GitHub Actions" || echo "Pas de changements à committer"
         git push
-
-    - name: 💾 Sauvegarder donnees.csv comme artefact
-      uses: actions/upload-artifact@v3
+        
+    - name: Sauvegarder donnees.csv comme artefact
+      uses: actions/upload-artifact@v4
       with:
         name: sauvegarde-donnees
         path: donnees.csv
 
-    - name: 💾 Sauvegarder tous les backups
-      uses: actions/upload-artifact@v3
+    - name: Sauvegarder tous les backups
+      uses: actions/upload-artifact@v4
       with:
         name: backups
         path: backups/*.csv

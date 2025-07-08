@@ -6,3 +6,4 @@ scikit-learn==1.6.1
 google-api-python-client
 youtube-transcript-api
 isodate
+openpyxl

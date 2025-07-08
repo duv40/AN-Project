@@ -1,10 +1,7 @@
 from googleapiclient.discovery import build
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api._errors import (
-    TranscriptsDisabled,
-    NoTranscriptFound,
-    VideoUnavailable,
-    VideoUnplayable
+    TranscriptsDisabled, NoTranscriptFound, VideoUnavailable, VideoUnplayable
 )
 import csv
 from datetime import datetime
@@ -111,8 +108,20 @@ def get_video_details(video_id):
     }
 
 def main():
+    # Chargement des vidéos déjà enregistrées
+    chemin_donnees = os.path.join(racine, 'donnees.csv')
+    try:
+        data_existante = pd.read_csv(chemin_donnees, encoding='utf-8')
+        ids_existants = set(data_existante['video_id'])
+    except FileNotFoundError:
+        data_existante = pd.DataFrame()
+        ids_existants = set()
+
     for i, playlist in enumerate(liste_playlist):
-        video_ids = get_video_ids(playlist)
+        all_video_ids = get_video_ids(playlist)
+        video_ids = [vid for vid in all_video_ids if vid not in ids_existants]
+        print(f"🎯 Playlist {i+1} : {len(video_ids)} nouvelles vidéos à analyser")
+
         fieldnames = [
             'url_video', 'video_id', 'titre', 'description', 'transcription',
             'date_publication', 'jour_semaine', 'vues', 'likes', 'commentaires', 'duree',
@@ -129,54 +138,42 @@ def main():
                     writer.writerow(data)
 
     # Fusion et nettoyage
-    f1 = pd.read_csv(os.path.join(racine, 'f1.csv'))
-    f2 = pd.read_csv(os.path.join(racine, 'f2.csv'))
-    f3 = pd.read_csv(os.path.join(racine, 'f3.csv'))
-    f4 = pd.read_csv(os.path.join(racine, 'f4.csv'))
+    f_dataframes = [pd.read_csv(os.path.join(racine, f)) for f in nom_fichier]
+    fusion = pd.concat(f_dataframes).drop_duplicates(subset='video_id').reset_index(drop=True)
 
-    chemin_donnees = os.path.join(racine, 'donnees.csv')
-    try:
-        data = pd.read_csv(chemin_donnees, encoding='utf-8')
-    except FileNotFoundError:
-        data = pd.DataFrame()
-
-    fusion = pd.concat([f1, f2, f3, f4]).reset_index(drop=True)
-    fusion = fusion.drop_duplicates(subset='video_id').reset_index(drop=True)
-
+    # Exclusion des émissions non désirées
     maListe = [
         'TH MATIN', 'FEMMES LEADERS', 'QUE DIT LA LOI', 'FOCUS SANTE',
         'LEXIQUE PARLEMENTAIRE', "PARLEMEN'TERRE", 'ENTRE PARLEMENTAIRES',
         'JOURNAL', 'JT', 'REVUE DE PRESSE', 'DYSFONCTON ERECTILE', "PARL'HEBDO"
     ]
-
     for emission in maListe:
         fusion = fusion[~fusion.titre.str.contains(emission, case=False, na=False)]
 
+    # Nettoyages
     fusion.transcription = fusion.transcription.astype(str)
     fusion.date_publication = pd.to_datetime(fusion.date_publication, format='%d/%m/%Y')
     fusion.type_activite = fusion.type_activite.astype(str)
     fusion.domaine = fusion.domaine.astype(str)
 
+    # Traduction jours
     traduction_jour = {
         "Monday": "Lundi", "Tuesday": "Mardi", "Wednesday": "Mercredi",
         "Thursday": "Jeudi", "Friday": "Vendredi", "Saturday": "Samedi", "Sunday": "Dimanche"
     }
-
     fusion.jour_semaine = fusion.jour_semaine.map(traduction_jour)
 
-    a_ajouter = fusion[~fusion.video_id.isin(data.video_id)]
+    # Ajout uniquement des nouvelles vidéos
+    a_ajouter = fusion[~fusion.video_id.isin(data_existante.video_id)]
 
     if os.path.exists(chemin_donnees):
-        backup_path = os.path.join(
-            backup_dir, f"donnees_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-        )
+        backup_path = os.path.join(backup_dir, f"donnees_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv")
         shutil.copy(chemin_donnees, backup_path)
-        print(f"-->Fichier existant sauvegardé dans {backup_path}")
+        print(f"🗂️ Fichier existant sauvegardé dans {backup_path}")
 
-    data = pd.concat([data, a_ajouter]).reset_index(drop=True)
-    data.to_csv(chemin_donnees, index=False)
-
-    print(f"-->{len(a_ajouter)} nouvelles vidéos ajoutées à donnees.csv")
+    donnees_finales = pd.concat([data_existante, a_ajouter]).reset_index(drop=True)
+    donnees_finales.to_csv(chemin_donnees, index=False)
+    print(f"✅ {len(a_ajouter)} nouvelles vidéos ajoutées à donnees.csv")
 
 if __name__ == '__main__':
     main()

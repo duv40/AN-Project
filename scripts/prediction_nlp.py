@@ -91,4 +91,8 @@ if os.path.exists(chemin_donnees):
     print(f"🗂️ Backup effectué : {backup_path}")
 
 data.to_csv(chemin_donnees, index=False)
+chemin_xlsx = os.path.join(racine, 'donnees.xlsx')
+data.to_excel(chemin_xlsx, index=False)
+print("✅ Fichier donnees.xlsx généré.")
+
 print(f"✅ {len(working_list)} lignes mises à jour avec succès.")

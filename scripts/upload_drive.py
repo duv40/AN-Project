@@ -17,10 +17,14 @@ service = build('drive', 'v3', credentials=credentials)
 
 # === Nom du fichier à uploader ===
 fichier_local = 'donnees.xlsx'  # ou donnees.csv
-nom_sur_drive = 'donnees_automatique.xlsx'
+nom_sur_drive = 'donnees.xlsx'
 
 # === Définition des métadonnées ===
-file_metadata = {'name': nom_sur_drive}
+file_metadata = {
+    'name': nom_sur_drive,
+    'parents': ['1TfYWl5TjIcklmSAxo_H0a-LMvlYHaSZO']
+}
+
 
 # === Fichier à uploader ===
 media = MediaFileUpload(fichier_local, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')

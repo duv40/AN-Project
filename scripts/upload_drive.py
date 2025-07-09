@@ -7,7 +7,6 @@ import os
 # === Lecture des informations d'identification depuis les secrets ===
 SERVICE_ACCOUNT_INFO = json.loads(os.getenv("GOOGLE_DRIVE_CREDENTIALS_JSON"))
 print("✅ Clé lue avec succès !")
-print("Client email :", SERVICE_ACCOUNT_INFO["client_email"])
 
 SCOPES = ['https://www.googleapis.com/auth/drive.file']  # accès limité
 credentials = service_account.Credentials.from_service_account_info(

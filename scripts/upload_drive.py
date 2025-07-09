@@ -5,7 +5,7 @@ import json
 import os
 
 # === Lecture des informations d'identification depuis les secrets ===
-SERVICE_ACCOUNT_INFO = json.loads(os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON"))
+SERVICE_ACCOUNT_INFO = json.loads(os.getenv("GOOGLE_DRIVE_CREDENTIALS_JSON"))
 print("✅ Clé lue avec succès !")
 print("Client email :", data["client_email"])
 

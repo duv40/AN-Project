@@ -1,3 +1,4 @@
+
 import pandas as pd
 import spacy
 import numpy as np
@@ -54,6 +55,7 @@ liste_a_remplir = data[(data['type_activite'] == '') | (data['domaine'] == '')]
 
 if liste_a_remplir.empty:
     print("✅ Aucune ligne à mettre à jour. Fichier déjà complet.")
+    excel_path = os.path.join(racine, 'donnees.xlsx')
     data.to_excel(excel_path, index=False)
     print("📁 donnees.xlsx généré avec succès.")
     sys.exit(0)

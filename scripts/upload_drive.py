@@ -3,6 +3,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 import json
 import os
+racine = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 # === Lecture des informations d'identification depuis les secrets ===
 SERVICE_ACCOUNT_INFO = json.loads(os.getenv("GOOGLE_DRIVE_CREDENTIALS_JSON"))
@@ -17,7 +18,7 @@ credentials = service_account.Credentials.from_service_account_info(
 service = build('drive', 'v3', credentials=credentials)
 
 # === Nom du fichier à uploader ===
-fichier_local = 'donnees.xlsx'  # ou donnees.csv
+fichier_local = os.path.join(racine, 'donnees.xlsx') # ou donnees.csv
 nom_sur_drive = 'donnees.xlsx'
 
 # === Définition des métadonnées ===

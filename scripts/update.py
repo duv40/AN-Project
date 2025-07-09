@@ -13,3 +13,4 @@ def run_script(script_name):
 if __name__ == "__main__":
     run_script("scripts/collecte_youtube.py")
     run_script("scripts/prediction_nlp.py")
+    run_script("scripts/upload_drive.py")

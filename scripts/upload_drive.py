@@ -21,7 +21,8 @@ service = build('drive', 'v3', credentials=creds)
 
 # === Métadonnées du fichier à envoyer ===
 file_metadata = {
-    'name': 'donnees.xlsx'
+    'name': 'donnees.xlsx',
+    'parents': ['1TfYWl5TjIcklmSAxo_H0a-LMvlYHaSZO']
 }
 
 # === Chemin du fichier local à uploader ===

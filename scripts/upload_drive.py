@@ -24,7 +24,9 @@ nom_sur_drive = 'donnees.xlsx'
 # === Définition des métadonnées ===
 file_metadata = {
     'name': nom_sur_drive,
-    'parents': ['1TfYWl5TjIcklmSAxo_H0a-LMvlYHaSZO']
+    'parents': ['1TfYWl5TjIcklmSAxo_H0a-LMvlYHaSZO'],
+    'driveId': '1TfYWl5TjIcklmSAxo_H0a-LMvlYHaSZO',
+    'mimeType': 'application/vnd.google-apps.spreadsheet'
 }
 
 
@@ -35,7 +37,8 @@ media = MediaFileUpload(fichier_local, mimetype='application/vnd.openxmlformats-
 fichier = service.files().create(
     body=file_metadata,
     media_body=media,
-    fields='id'
+    fields='id',
+    supportsAllDrives=True
 ).execute()
 
 print(f"✅ Fichier uploadé avec succès. ID Google Drive : {fichier.get('id')}")

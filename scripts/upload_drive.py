@@ -1,31 +1,35 @@
-import os
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
 import json
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
+import os
 
-# === Reconstitution du credentials.json temporaire ===
-creds_str = os.getenv("GOOGLE_DRIVE_CREDENTIALS_JSON")
-if not creds_str:
-    print("❌ Clé secrète absente.")
-    exit(1)
+# === Lecture des informations d'identification depuis les secrets ===
+SERVICE_ACCOUNT_INFO = json.loads(os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON"))
 
-credentials_path = "temp_credentials.json"
-with open(credentials_path, "w") as f:
-    json.dump(json.loads(creds_str), f)
+SCOPES = ['https://www.googleapis.com/auth/drive.file']  # accès limité
+credentials = service_account.Credentials.from_service_account_info(
+    SERVICE_ACCOUNT_INFO, scopes=SCOPES
+)
 
-# === Authentification Google Drive ===
-gauth = GoogleAuth()
-gauth.LoadClientConfigFile(credentials_path)
-gauth.LocalWebserverAuth()  # Pour exécution locale, sinon .CommandLineAuth()
+# === Initialisation du service Google Drive ===
+service = build('drive', 'v3', credentials=credentials)
 
-drive = GoogleDrive(gauth)
+# === Nom du fichier à uploader ===
+fichier_local = 'donnees.xlsx'  # ou donnees.csv
+nom_sur_drive = 'donnees_automatique.xlsx'
 
-# === Chemin du fichier à uploader ===
-fichier_excel = "donnees.xlsx"
+# === Définition des métadonnées ===
+file_metadata = {'name': nom_sur_drive}
 
-# === Upload du fichier sur Drive ===
-fichier = drive.CreateFile({'title': fichier_excel})
-fichier.SetContentFile(fichier_excel)
-fichier.Upload()
+# === Fichier à uploader ===
+media = MediaFileUpload(fichier_local, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
-print(f"✅ Fichier '{fichier_excel}' uploadé sur Google Drive avec succès.")
+# === Upload du fichier ===
+fichier = service.files().create(
+    body=file_metadata,
+    media_body=media,
+    fields='id'
+).execute()
+
+print(f"✅ Fichier uploadé avec succès. ID Google Drive : {fichier.get('id')}")

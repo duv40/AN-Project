@@ -54,6 +54,8 @@ liste_a_remplir = data[(data['type_activite'] == '') | (data['domaine'] == '')]
 
 if liste_a_remplir.empty:
     print("✅ Aucune ligne à mettre à jour. Fichier déjà complet.")
+    data.to_excel(excel_path, index=False)
+    print("📁 donnees.xlsx généré avec succès.")
     sys.exit(0)
 
 # === Construction du corpus texte ===

@@ -1,44 +1,43 @@
-from google.oauth2 import service_account
+import os
+import json
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
-import json
-import os
-racine = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
-# === Lecture des informations d'identification depuis les secrets ===
-SERVICE_ACCOUNT_INFO = json.loads(os.getenv("GOOGLE_DRIVE_CREDENTIALS_JSON"))
-print("✅ Clé lue avec succès !")
+# === Lecture des identifiants depuis les variables d'environnement ===
+creds_json = os.getenv("GOOGLE_OAUTH_CREDENTIALS_JSON")
+creds_dict = json.loads(creds_json)
 
-SCOPES = ['https://www.googleapis.com/auth/drive.file']  # accès limité
-credentials = service_account.Credentials.from_service_account_info(
-    SERVICE_ACCOUNT_INFO, scopes=SCOPES
-)
+# === Scopes d'accès au Drive ===
+SCOPES = ['https://www.googleapis.com/auth/drive.file']
 
-# === Initialisation du service Google Drive ===
-service = build('drive', 'v3', credentials=credentials)
+# === Authentification OAuth (en local uniquement) ===
+flow = InstalledAppFlow.from_client_config(creds_dict, SCOPES)
+creds = flow.run_local_server(port=0)  # ⚠️ Ne fonctionne pas sur GitHub Actions
 
-# === Nom du fichier à uploader ===
-fichier_local = os.path.join(racine, 'donnees.xlsx') # ou donnees.csv
-nom_sur_drive = 'donnees.xlsx'
+# === Initialisation du service Drive ===
+service = build('drive', 'v3', credentials=creds)
 
-# === Définition des métadonnées ===
+# === Métadonnées du fichier à envoyer ===
 file_metadata = {
-    'name': nom_sur_drive,
-    'parents': ['1TfYWl5TjIcklmSAxo_H0a-LMvlYHaSZO'],
-    'driveId': '1TfYWl5TjIcklmSAxo_H0a-LMvlYHaSZO',
-    'mimeType': 'application/vnd.google-apps.spreadsheet'
+    'name': 'donnees.xlsx'
 }
 
+# === Chemin du fichier local à uploader ===
+racine = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+fichier_local = os.path.join(racine, 'donnees.xlsx')
 
-# === Fichier à uploader ===
-media = MediaFileUpload(fichier_local, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+media = MediaFileUpload(
+    fichier_local,
+    mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+)
 
 # === Upload du fichier ===
-fichier = service.files().create(
+file = service.files().create(
     body=file_metadata,
     media_body=media,
-    fields='id',
-    supportsAllDrives=True
+    fields='id'
 ).execute()
 
-print(f"✅ Fichier uploadé avec succès. ID Google Drive : {fichier.get('id')}")
+print(f"✅ Fichier uploadé avec succès. ID : {file.get('id')}")

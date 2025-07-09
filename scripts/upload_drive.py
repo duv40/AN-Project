@@ -6,7 +6,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
 # === Lecture des identifiants depuis les variables d'environnement ===
-creds_json = os.getenv("GOOGLE_OAUTH_CREDENTIALS_JSON")
+creds_json = os.getenv("GOOGLE_DRIVE_CREDENTIALS_JSON")
 creds_dict = json.loads(creds_json)
 
 # === Scopes d'accès au Drive ===

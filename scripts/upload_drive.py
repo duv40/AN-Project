@@ -20,8 +20,6 @@ SCOPES = ['https://www.googleapis.com/auth/drive.file']
 # === Récupération ou création des credentials ===
 if token_json:
     creds = Credentials.from_authorized_user_info(json.loads(token_json), SCOPES)
-
-    # Rafraîchir si besoin
     if creds.expired and creds.refresh_token:
         creds.refresh(google.auth.transport.requests.Request())
 else:
@@ -36,47 +34,37 @@ service = build('drive', 'v3', credentials=creds)
 # === Préparation du fichier local ===
 racine = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 fichier_local = os.path.join(racine, 'donnees.xlsx')
-
-# === Fonction pour supprimer les fichiers portant le même nom ===
-def supprimer_anciens_fichiers(service, nom_fichier, dossier_id=None):
-    try:
-        q = f"name='{nom_fichier}' and trashed=false"
-        if dossier_id:
-            q += f" and '{dossier_id}' in parents"
-
-        response = service.files().list(
-            q=q,
-            spaces='drive',
-            fields='files(id, name)'
-        ).execute()
-
-        fichiers = response.get('files', [])
-        for f in fichiers:
-            print(f"🗑️ Suppression de l'ancien fichier : {f['name']} ({f['id']})")
-            service.files().delete(fileId=f['id']).execute()
-
-    except HttpError as error:
-        print(f"❌ Erreur lors de la suppression : {error}")
-
-# === Supprimer anciens fichiers nommés 'donnees.xlsx' ===
+nom_fichier = 'donnees.xlsx'
 dossier_id = '1TfYWl5TjIcklmSAxo_H0a-LMvlYHaSZO'
-supprimer_anciens_fichiers(service, 'donnees.xlsx', dossier_id)
 
-# === Upload vers Drive ===
-file_metadata = {
-    'name': 'donnees.xlsx',
-    'parents': [dossier_id]
-}
+try:
+    # === Recherche du fichier existant ===
+    query = f"name='{nom_fichier}' and '{dossier_id}' in parents and trashed=false"
+    result = service.files().list(q=query, spaces='drive', fields='files(id, name)').execute()
+    fichiers = result.get('files', [])
 
-media = MediaFileUpload(
-    fichier_local,
-    mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-)
+    media = MediaFileUpload(
+        fichier_local,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
 
-file = service.files().create(
-    body=file_metadata,
-    media_body=media,
-    fields='id'
-).execute()
+    if fichiers:
+        # 🔁 Mettre à jour le premier fichier trouvé
+        file_id = fichiers[0]['id']
+        service.files().update(fileId=file_id, media_body=media).execute()
+        print(f"✅ Fichier existant mis à jour. ID : {file_id}")
+    else:
+        # ➕ Créer un nouveau fichier
+        file_metadata = {
+            'name': nom_fichier,
+            'parents': [dossier_id]
+        }
+        file = service.files().create(
+            body=file_metadata,
+            media_body=media,
+            fields='id'
+        ).execute()
+        print(f"✅ Nouveau fichier uploadé. ID : {file.get('id')}")
 
-print(f"✅ Fichier uploadé avec succès. ID : {file.get('id')}")
+except HttpError as error:
+    print(f"❌ Erreur Google Drive : {error}")

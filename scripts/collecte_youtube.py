@@ -86,7 +86,7 @@ def get_video_details(video_id):
 
     ratio_likes_vues = round((likes / vues) * 100, 2) if vues > 0 else 0
     ratio_commentaires_vues = round((commentaires / vues) * 100, 2) if vues > 0 else 0
-    performance_globale = round((0.3 * ratio_likes_vues + 0.7 * ratio_commentaires_vues), 2)
+    performance_globale = round((0.5 * ratio_likes_vues + 0.5 * ratio_commentaires_vues), 2)
 
     return {
         'url_video': f"https://www.youtube.com/watch?v={video_id}",

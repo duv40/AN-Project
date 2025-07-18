@@ -108,7 +108,6 @@ def get_video_details(video_id):
     }
 
 def main():
-    # Chargement des vidéos déjà enregistrées
     chemin_donnees = os.path.join(racine, 'donnees.csv')
     try:
         data_existante = pd.read_csv(chemin_donnees, encoding='utf-8')
@@ -137,11 +136,9 @@ def main():
                 if data:
                     writer.writerow(data)
 
-    # Fusion et nettoyage
     f_dataframes = [pd.read_csv(os.path.join(racine, f)) for f in nom_fichier]
     fusion = pd.concat(f_dataframes).drop_duplicates(subset='video_id').reset_index(drop=True)
 
-    # Exclusion des émissions non désirées
     maListe = [
         'TH MATIN', 'FEMMES LEADERS', 'QUE DIT LA LOI', 'FOCUS SANTE',
         'LEXIQUE PARLEMENTAIRE', "PARLEMEN'TERRE", 'ENTRE PARLEMENTAIRES',
@@ -150,28 +147,37 @@ def main():
     for emission in maListe:
         fusion = fusion[~fusion.titre.str.contains(emission, case=False, na=False)]
 
-    # Nettoyages
     fusion.transcription = fusion.transcription.astype(str)
     fusion.date_publication = pd.to_datetime(fusion.date_publication, format='%d/%m/%Y')
     fusion.type_activite = fusion.type_activite.astype(str)
     fusion.domaine = fusion.domaine.astype(str)
 
-    # Traduction jours
     traduction_jour = {
         "Monday": "Lundi", "Tuesday": "Mardi", "Wednesday": "Mercredi",
         "Thursday": "Jeudi", "Friday": "Vendredi", "Saturday": "Samedi", "Sunday": "Dimanche"
     }
     fusion.jour_semaine = fusion.jour_semaine.map(traduction_jour)
 
-    # Ajout uniquement des nouvelles vidéos
     a_ajouter = fusion[~fusion.video_id.isin(data_existante.video_id)]
+
+    # 🔁 Mise à jour des stats pour vidéos existantes
+    colonnes_dynamiques = [
+        'vues', 'likes', 'commentaires',
+        'ratio_likes_vues', 'ratio_commentaires_vues',
+        'performance_globale'
+    ]
+    fusion_indexed = fusion.set_index('video_id')
+    data_existante_indexed = data_existante.set_index('video_id')
+    data_existante_indexed.update(fusion_indexed[colonnes_dynamiques])
+    data_existante = data_existante_indexed.reset_index()
+    fusion = fusion_indexed.reset_index()
 
     if os.path.exists(chemin_donnees):
         backup_path = os.path.join(backup_dir, f"donnees_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv")
         shutil.copy(chemin_donnees, backup_path)
         print(f"🗂️ Fichier existant sauvegardé dans {backup_path}")
 
-    donnees_finales = pd.concat([data_existante, a_ajouter]).reset_index(drop=True)
+    donnees_finales = pd.concat([data_existante, a_ajouter]).drop_duplicates(subset='video_id').reset_index(drop=True)
     donnees_finales.to_csv(chemin_donnees, index=False)
     print(f"✅ {len(a_ajouter)} nouvelles vidéos ajoutées à donnees.csv")
 
